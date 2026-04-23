@@ -1,131 +1,112 @@
-# ============================================
-# Inventory App - Full Docker Compose Stack
-# ============================================
-# Services:
-#   - app          → NestJS API (port 3000)
-#   - postgres     → PostgreSQL database (port 5432)
-#   - redis        → Redis cache + BullMQ (port 6379)
-#   - redisinsight  → Redis GUI (port 5540)
-#   - pgadmin      → PostgreSQL GUI (port 8080)
-#   - mailpit      → Email testing (SMTP: 1025, UI: 8025)
-#   - nginx        → Reverse proxy (port 80)
-#   - prometheus   → Metrics collection (port 9090)
-#   - grafana      → Monitoring dashboards (port 3001)
-# ============================================
-
 services:
-  # ─── Application ───
+
+  # ─── Application ───────────────────────────────────────
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: inventory_app
+    container_name: app
     restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DB_HOST: postgres
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      EMAIL_HOST: mailpit
-      EMAIL_PORT: 1025
-      EMAIL_SECURE: 'false'
-      EMAIL_USER: ''
-      EMAIL_PASS: ''
-      NODE_ENV: production
     ports:
       - "3000:3000"
+    env_file: .env
+    volumes:
+      - logs_data:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     networks:
-      - inventory
+      - backend
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1" ]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  # ─── Database ───
+  # ─── PostgreSQL ─────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: inventory_app
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" 
     networks:
-      - inventory
+      - backend
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U admin -d inventory_app" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
-  # ─── Cache & Queue ───
+  # ─── Redis (Cache + BullMQ) ─────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: redis
     restart: unless-stopped
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
     networks:
-      - inventory
-    volumes:
-      - redis_data:/data
+      - backend
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ─── Redis GUI ───
+  # ─── RedisInsight ───────────────────────────────────────
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
     restart: unless-stopped
     ports:
       - "5540:5540"
-    networks:
-      - inventory
+    volumes:
+      - redisinsight_data:/data
     depends_on:
       - redis
+    networks:
+      - backend
 
-  # ─── PostgreSQL GUI ───
+  # ─── pgAdmin ────────────────────────────────────────────
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
     restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: hello@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: hello
     ports:
-      - "8080:80"
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
     networks:
-      - inventory
+      - backend
 
-  # ─── Email Testing (Mailpit) ───
+  # ─── Mailpit ────────────────────────────────────────────
   mailpit:
     image: axllent/mailpit:latest
     container_name: mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # Web UI
+      - "1025:1025"
+      - "8025:8025"
     networks:
-      - inventory
+      - backend
 
-  # ─── Reverse Proxy ───
+  # ─── Nginx ──────────────────────────────────────────────
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -137,49 +118,17 @@ services:
     depends_on:
       - app
     networks:
-      - inventory
+      - backend
 
-  # ─── Monitoring: Prometheus ───
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    depends_on:
-      - app
-    networks:
-      - inventory
-
-  # ─── Monitoring: Grafana ───
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_USERS_ALLOW_SIGN_UP: 'false'
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - prometheus
-    networks:
-      - inventory
-
+# ─── Volumes ────────────────────────────────────────────
 volumes:
   postgres_data:
   redis_data:
-  prometheus_data:
-  grafana_data:
+  redisinsight_data:
+  pgadmin_data:
+  logs_data:
 
-
+# ─── Networks ───────────────────────────────────────────
 networks:
-  inventory:
+  backend:
     driver: bridge
