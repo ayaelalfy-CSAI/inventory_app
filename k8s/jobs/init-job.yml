@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init-job
+  namespace: inventory
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: postgres-init-container
+          image: postgres:16-alpine
+          env:
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_USERNAME
+
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_PASSWORD
+
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_NAME
+
+            - name: PGHOST
+              value: postgres
+
+            - name: PGPORT
+              value: "5432"
+
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL..."
+
+              until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER"; do
+                sleep 5
+              done
+
+              echo "Creating database if not exists..."
+
+              psql -h "$PGHOST" -U "$PGUSER" -d postgres <<EOF
+
+              SELECT 'CREATE DATABASE "' || :'PGDATABASE' || '"'
+              WHERE NOT EXISTS (
+                SELECT FROM pg_database WHERE datname = :'PGDATABASE'
+              )\gexec
+
+              GRANT ALL PRIVILEGES ON DATABASE "' || :'PGDATABASE' || '" TO "' || :'PGUSER' || '";
+
+              EOF
+
+              echo "Database ready!"

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-app-deployment
+  namespace: inventory
+spec:
+  replicas: 2 
+  selector:
+    matchLabels:
+      app: nodejs-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-app
+    spec:        
+
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-svc -U admin -d inventory_app;
+              do echo "Waiting for postgres..."; sleep 2; done
+              echo "Postgres is ready!"
+
+        - name: wait-for-redis
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis-service -p 6379 ping;
+              do echo "Waiting for redis..."; sleep 2; done
+              echo "Redis is ready!"
+
+      containers:
+        - name: app-container
+          image: ayaelalfy/inventory_app:latest
+
+          envFrom:
+           - configMapRef:
+              name: app-configmap   
+           - secretRef:
+              name: app-secret 
+
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+
+          ports:
+            - containerPort: 3000
+
+          livenessProbe:    
+            httpGet:  
+              path: /api/v1
+              port: 3000 
+            initialDelaySeconds: 60    
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5   
+
+          readinessProbe:
+            httpGet:
+              path: /api/v1
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5

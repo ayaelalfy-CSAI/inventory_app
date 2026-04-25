@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-insight-deployment
+  namespace: inventory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-insight
+  template:
+    metadata:
+      labels:
+        app: redis-insight
+    spec:
+      initContainers:
+        - name: wait-for-redis
+          image: redis:7-alpine
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis-svc -a $REDIS_PASSWORD ping;
+              do echo "Waiting for redis..."; sleep 2; done
+              echo "Redis is ready!"
+
+      containers:
+      - name: redis-insight
+        image: redis/redisinsight:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"  
+        ports:
+        - containerPort: 5540

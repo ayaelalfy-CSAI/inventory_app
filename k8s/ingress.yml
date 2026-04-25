@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: inventory-ingress
+  namespace: inventory
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "75"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: inventory-app.local
+      http:
+        paths:
+          #  NestJS API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: app-svc
+                port:
+                  number: 3000
+
+          #  Swagger Docs
+          - path: /api/docs
+            pathType: Prefix
+            backend:
+              service:
+                name: app-svc
+                port:
+                  number: 3000
+
+          #  pgAdmin
+          - path: /pgadmin
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin-svc
+                port:
+                  number: 80
+
+          #  RedisInsight
+          - path: /redisinsight
+            pathType: Prefix
+            backend:
+              service:
+                name: redis-insight-svc
+                port:
+                  number: 5540
+
+          #  Mailpit
+          - path: /mailpit
+            pathType: Prefix
+            backend:
+              service:
+                name: mailpit-svc
+                port:
+                  number: 8025

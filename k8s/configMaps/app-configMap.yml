@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-configmap
+  namespace: inventory
+data:
+  DB_TYPE: postgres
+  DB_HOST: postgres-svc    
+  DB_PORT: "5432"          
+  REDIS_HOST: redis-svc    
+  REDIS_PORT: "6379"
+  EMAIL_HOST: mailpit-service
+  EMAIL_PORT: "1025"
+  EMAIL_SECURE: "false"
+  EMAIL_USER: ""
+  EMAIL_PASS: ""
+  NODE_ENV: production
+  
