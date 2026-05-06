@@ -30,7 +30,7 @@ spec:
                   key: POSTGRES_DB
 
             - name: PGHOST
-              value: postgres
+              value: postgres-svc
 
             - name: PGPORT
               value: "5432"
