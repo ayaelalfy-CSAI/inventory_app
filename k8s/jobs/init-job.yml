@@ -15,19 +15,19 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: DB_USERNAME
+                  key: POSTGRES_USER 
 
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: DB_PASSWORD
+                  key: POSTGRES_PASSWORD
 
             - name: PGDATABASE
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: DB_NAME
+                  key: POSTGRES_DB
 
             - name: PGHOST
               value: postgres
