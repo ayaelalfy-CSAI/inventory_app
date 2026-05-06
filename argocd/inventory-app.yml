@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: inventory-app
+  namespace: argocd
+spec:
+  project: default
+  source: 
+    repoURL: 'https://github.com/ayaelalfy-CSAI/inventory_app.git'
+    targetRevision: master
+    path: k8s
+    directory:
+      recurse: true
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: inventory
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true   
