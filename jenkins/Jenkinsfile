@@ -5,7 +5,7 @@ pipeline {
         APP_NAME          = "inventory_app"
         IMAGE_TAG         = "${BUILD_NUMBER}"
         REGISTRY          = "ayaelalfy"
-        SONAR_HOST_URL    = "http://172.17.0.1:9000"   
+        SONAR_HOST_URL    = "http://172.17.0.1:9000"
         SONAR_PROJECT_KEY = "inventory_app"
     }
 
@@ -20,19 +20,21 @@ pipeline {
 
         stage('🔎 SonarQube Analysis') {
             steps {
-              withSonarQubeEnv('SonarQube') {
-               sh """
-                 docker run --rm \
-                    --network host \
-                    -e SONAR_TOKEN=$SONAR_AUTH_TOKEN \
-                    -v \$PWD:/usr/src \
-                    sonarsource/sonar-scanner-cli \
-                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                    -Dsonar.sources=/usr/src \
-                    -Dsonar.host.url=${SONAR_HOST_URL} \
-                    -Dsonar.login=$SONAR_AUTH_TOKEN
-                """
-             }
+                withSonarQubeEnv('SonarQube') {
+                    sh """
+                        mkdir -p \$PWD/.scannerwork
+                        docker run --rm \
+                            --network host \
+                            -e SONAR_TOKEN=\$SONAR_AUTH_TOKEN \
+                            -v \$PWD:/usr/src \
+                            -v \$PWD/.scannerwork:/tmp/.scannerwork \
+                            sonarsource/sonar-scanner-cli \
+                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                            -Dsonar.sources=/usr/src \
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.working.directory=/tmp/.scannerwork
+                    """
+                }
             }
         }
 
@@ -44,7 +46,7 @@ pipeline {
             }
         }
 
-        stage('🐳 Build Docker Image') {       
+        stage('🐳 Build Docker Image') {
             steps {
                 sh "docker build -t ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} ."
             }
