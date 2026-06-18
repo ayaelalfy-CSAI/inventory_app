@@ -20,17 +20,19 @@ pipeline {
 
         stage('🔎 SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh """
-                        docker run --rm \
-                            --network host \
-                            -v \$PWD:/usr/src \
-                            sonarsource/sonar-scanner-cli \
-                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                            -Dsonar.sources=/usr/src \
-                            -Dsonar.host.url=${SONAR_HOST_URL}
-                    """
-                }
+              withSonarQubeEnv('SonarQube') {
+               sh """
+                 docker run --rm \
+                    --network host \
+                    -e SONAR_TOKEN=$SONAR_AUTH_TOKEN \
+                    -v \$PWD:/usr/src \
+                    sonarsource/sonar-scanner-cli \
+                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                    -Dsonar.sources=/usr/src \
+                    -Dsonar.host.url=${SONAR_HOST_URL} \
+                    -Dsonar.login=$SONAR_AUTH_TOKEN
+                """
+             }
             }
         }
 
