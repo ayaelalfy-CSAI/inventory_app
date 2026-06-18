@@ -44,13 +44,40 @@ pipeline {
             }
         }
 
-        stage('🐳 Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('📦 Push to Docker Hub') {
+        stage('Trivy - Image Scan') {
+            steps {
+                sh """
+                    trivy image \
+                        --severity LOW,MEDIUM,HIGH \
+                        --exit-code 0 \
+                        --quiet \
+                        --format json \
+                        -o trivy-medium.json \
+                        ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+
+                    trivy image \
+                        --severity CRITICAL \
+                        --exit-code 1 \
+                        --quiet \
+                        --format json \
+                        -o trivy-critical.json \
+                        ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+                """
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-*.json', fingerprint: true
+                }
+            }
+        }        
+
+        stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub',
@@ -78,4 +105,4 @@ pipeline {
             cleanWs()
         }
     }
-}
+}    
