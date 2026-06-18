@@ -20,21 +20,21 @@ pipeline {
 
         stage('🔎 SonarQube Analysis') {
             steps {
-               withSonarQubeEnv('SonarQube') {
-                 sh """
-                   docker run --rm \
+              withSonarQubeEnv('SonarQube') {
+               sh """
+                 docker run --rm \
                     --network host \
                     -e SONAR_TOKEN=$SONAR_AUTH_TOKEN \
-                    -v \$PWD:/usr/src \
+                    -v $WORKSPACE:/usr/src \
                     sonarsource/sonar-scanner-cli \
                     -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                    -Dsonar.sources=/usr/src \
+                    -Dsonar.sources=. \
                     -Dsonar.host.url=${SONAR_HOST_URL} \
-                    -Dsonar.login=$SONAR_AUTH_TOKEN
-              """
-        }
-    }
-}
+                    -Dsonar.branch.name=master
+               """
+                  }
+             }
+         }
 
         stage('🚦 Quality Gate') {
             steps {
