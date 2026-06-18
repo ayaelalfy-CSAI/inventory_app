@@ -1,15 +1,16 @@
-pipeline{
+pipeline {
     agent { label "agent3" }
 
     environment {
-        APP_NAME = "inventory_app"
-        IMAGE_TAG = "${BUILD_NUMBER}"
-        REGISTRY = "ayaelalfy"
-        SONAR_HOST_URL  = "http://localhost:9000"
+        APP_NAME          = "inventory_app"
+        IMAGE_TAG         = "${BUILD_NUMBER}"
+        REGISTRY          = "ayaelalfy"
+        SONAR_HOST_URL    = "http://172.17.0.1:9000"   
         SONAR_PROJECT_KEY = "inventory_app"
     }
 
-    stages{
+    stages {
+
         stage('Checkout') {
             steps {
                 echo 'Cloning the repository...'
@@ -19,18 +20,19 @@ pipeline{
 
         stage('🔎 SonarQube Analysis') {
             steps {
-              withSonarQubeEnv('SonarQube') {
-                sh """
-                  docker run --rm \
-                   -v $PWD:/usr/src \
-                   sonarsource/sonar-scanner-cli \
-                   -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                   -Dsonar.sources=. \
-                   -Dsonar.host.url=${SONAR_HOST_URL}
-             """
-                 }
-              }
+                withSonarQubeEnv('SonarQube') {
+                    sh """
+                        docker run --rm \
+                            --network host \
+                            -v \$PWD:/usr/src \
+                            sonarsource/sonar-scanner-cli \
+                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                            -Dsonar.sources=/usr/src \
+                            -Dsonar.host.url=${SONAR_HOST_URL}
+                    """
+                }
             }
+        }
 
         stage('🚦 Quality Gate') {
             steps {
@@ -40,26 +42,38 @@ pipeline{
             }
         }
 
-        stage('📦 Push to Docker Hub') {
+        stage('🐳 Build Docker Image') {       
             steps {
-              withCredentials([usernamePassword(
-                credentialsId: 'dockerhub',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-                )]) {
-                sh """
-                  echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                  docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
-                  docker logout
-                """
-                }
+                sh "docker build -t ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} ."
             }
         }
 
-
-
+        stage('📦 Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+                        docker logout
+                    """
+                }
+            }
+        }
     }
-  
 
-
+    post {
+        success {
+            echo '✅ CI done! ArgoCD will deploy automatically.'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+        }
+        always {
+            cleanWs()
+        }
+    }
 }
