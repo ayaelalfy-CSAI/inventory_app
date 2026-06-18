@@ -17,30 +17,22 @@ pipeline {
             }
         }
         
-        stage('🔎 SonarQube Analysis') {
-         steps {
-           withSonarQubeEnv('SonarQube') {
-             withCredentials([string(credentialsId: 'jenkins-sonar', variable: 'SONAR_TOKEN')]) {
-                sh '''
-                    rm -rf .scannerwork
+       stage('🔎 SonarQube Analysis') {
+           steps {
+             withSonarQubeEnv('SonarQube') {
+              sh '''
+                rm -rf .scannerwork
 
-                    docker run --rm \
-                      --network host \
-                      -u $(id -u):$(id -g) \
-                      -v $WORKSPACE:/usr/src \
-                      -e SONAR_TOKEN=$SONAR_TOKEN \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=${SONAR_HOST_URL} \
-                      -Dsonar.login=$SONAR_TOKEN \
-                      -Dsonar.projectBaseDir=/usr/src
-                '''
-            }
-           }
+                sonar-scanner \
+                  -Dsonar.projectKey=inventory_app \
+                  -Dsonar.sources=. \
+                  -Dsonar.host.url=$SONAR_HOST_URL \
+                  -Dsonar.login=$SONAR_TOKEN
+            '''
+                  }
+              }
          }
-        }
-        
+         
         stage('🚦 Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
