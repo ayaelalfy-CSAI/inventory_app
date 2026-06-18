@@ -13,7 +13,7 @@ RUN npm run build
 
 
 #RUNNING STAGE
-FROM node:20-alpine
+FROM node:20-alpine3.19
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001   
