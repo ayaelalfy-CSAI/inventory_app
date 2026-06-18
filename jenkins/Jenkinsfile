@@ -1,0 +1,63 @@
+pipeline{
+    agent { label "agent3" }
+
+    environment {
+        APP_NAME = "inventory_app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        REGISTRY = "ayaelalfy"
+        SONAR_HOST_URL  = "http://localhost:9000"
+        SONAR_PROJECT_KEY = "inventory_app"
+    }
+
+    stages{
+        stage('Checkout') {
+            steps {
+                echo 'Cloning the repository...'
+                checkout scm
+            }
+        }
+
+        stage('🔎 SonarQube Analysis') {
+          steps {
+            withSonarQubeEnv('SonarQube') {
+              sh """
+                  sonar-scanner \
+                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=${SONAR_HOST_URL}
+            """
+            }
+          }
+        }
+
+        stage('🚦 Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('📦 Push to Docker Hub') {
+            steps {
+              withCredentials([usernamePassword(
+                credentialsId: 'dockerhub',
+                usernameVariable: 'DOCKER_USER',
+                passwordVariable: 'DOCKER_PASS'
+                )]) {
+                sh """
+                  echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                  docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+                  docker logout
+                """
+                }
+            }
+        }
+
+
+
+    }
+  
+
+
+}

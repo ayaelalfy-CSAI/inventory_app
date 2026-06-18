@@ -13,7 +13,6 @@ RUN npm run build
 
 
 #RUNNING STAGE
-
 FROM node:20-alpine
 
 RUN addgroup -g 1001 -S nodejs && \
