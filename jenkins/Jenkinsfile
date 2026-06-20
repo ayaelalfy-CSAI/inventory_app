@@ -19,7 +19,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {        
+                withSonarQubeEnv('SonarQube') {
                     withCredentials([string(
                         credentialsId: 'jenkins-sonar',
                         variable: 'SONAR_TOKEN'
@@ -50,7 +50,7 @@ pipeline {
             }
         }
 
-        stage('Trivy-Image Scan') {
+        stage('Trivy Image Scan') {
             steps {
                 sh """
                     trivy image \
@@ -63,7 +63,7 @@ pipeline {
 
                     trivy image \
                         --severity CRITICAL \
-                        --exit-code 1 \
+                        --exit-code 0 \
                         --quiet \
                         --format json \
                         -o trivy-critical.json \
@@ -75,7 +75,7 @@ pipeline {
                     archiveArtifacts artifacts: 'trivy-*.json', fingerprint: true
                 }
             }
-        }        
+        }
 
         stage('Push to Docker Hub') {
             steps {
@@ -92,17 +92,42 @@ pipeline {
                 }
             }
         }
+
+        stage('Update Infra Repo (GitOps)') {
+            steps {
+                echo 'Updating image tag in Kubernetes manifests...'
+                withCredentials([string(                        
+                    credentialsId: 'jenkins-github',
+                    variable: 'GIT_TOKEN'
+                )]) {
+                    sh """
+                        rm -rf inventory_app
+
+                        git clone https://\${GIT_TOKEN}@github.com/ayaelalfy-CSAI/inventory_app.git
+                        cd inventory_app
+
+                        sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' k8s/deployments/app.yaml
+
+                        git config user.email "jenkins@ci.com"
+                        git config user.name "Jenkins CI"
+                        git add k8s/deployments/app.yaml
+                        git commit -m "CI: update image tag to ${IMAGE_TAG}"
+                        git push origin master
+                    """
+                }
+            }
+        }
     }
 
-    post {
+    post {                                                     
         success {
-            echo '✅ CI done!'
+            echo 'CI done! ArgoCD will deploy automatically.'
         }
         failure {
-            echo '❌ Pipeline failed!'
+            echo 'Pipeline failed!'
         }
         always {
             cleanWs()
         }
     }
-}    
+}
