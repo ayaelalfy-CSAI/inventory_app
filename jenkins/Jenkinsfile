@@ -93,7 +93,7 @@ pipeline {
             }
         }
 
-        stage('Update Infra Repo (GitOps)') {
+        stage('Update Infra (GitOps)') {
             steps {
                 echo 'Updating image tag in Kubernetes manifests...'
                 withCredentials([string(                        
