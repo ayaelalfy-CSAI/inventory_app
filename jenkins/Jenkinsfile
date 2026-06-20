@@ -104,14 +104,14 @@ pipeline {
                         rm -rf inventory_app
 
                         git clone https://\${GIT_TOKEN}@github.com/ayaelalfy-CSAI/inventory_app.git
-                        cd inventory_app
+                        cd inventory_app 
 
-                        sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' k8s/deployments/app.yaml
+                        sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' inventory_app/k8s/deployments/app.yaml  
 
-                        git config user.email "jenkins@ci.com"
-                        git config user.name "Jenkins CI"
-                        git add k8s/deployments/app.yaml
-                        git commit -m "CI: update image tag to ${IMAGE_TAG}"
+                        git config user.email "jenkins@ci.com"  
+                        git config user.name "Jenkins CI" 
+                        git add inventory_app/k8s/deployments/app.yaml 
+                        git commit -m "CI: update image tag to ${IMAGE_TAG}"  
                         git push origin master
                     """
                 }
