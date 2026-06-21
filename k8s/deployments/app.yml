@@ -43,7 +43,7 @@ spec:
 
       containers:
         - name: app-container
-          image: ayaelalfy/inventory_app:65
+          image: ayaelalfy/inventory_app:66
 
           envFrom:
            - configMapRef:
