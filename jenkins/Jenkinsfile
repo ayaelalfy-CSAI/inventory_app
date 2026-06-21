@@ -131,7 +131,7 @@ pipeline {
                 color: 'danger',
                 message: "❌ *Pipeline FAILED*\n- *Job:* ${env.JOB_NAME}\n- *Build:* #${env.BUILD_NUMBER}\n- 🔗 ${env.BUILD_URL}"
             )
-            echo 'Pipeline failed! Check the logs for details.'
+            echo 'Pipeline failed! Check the logs.'
         }
         always {
             cleanWs()
