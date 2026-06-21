@@ -25,10 +25,10 @@ pipeline {
                         variable: 'SONAR_TOKEN'
                     )]) {
                         sh """
-                            /opt/sonar-scanner/bin/sonar-scanner \
-                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                            /opt/sonar-scanner/bin/sonar-scanner \\
+                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
+                                -Dsonar.sources=. \\
+                                -Dsonar.host.url=${SONAR_HOST_URL} \\
                                 -Dsonar.token=\${SONAR_TOKEN}
                         """
                     }
@@ -53,20 +53,20 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh """
-                    trivy image \
-                        --severity LOW,MEDIUM,HIGH \
-                        --exit-code 0 \
-                        --quiet \
-                        --format json \
-                        -o trivy-medium.json \
+                    trivy image \\
+                        --severity LOW,MEDIUM,HIGH \\
+                        --exit-code 0 \\
+                        --quiet \\
+                        --format json \\
+                        -o trivy-medium.json \\
                         ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
 
-                    trivy image \
-                        --severity CRITICAL \
-                        --exit-code 0 \
-                        --quiet \
-                        --format json \
-                        -o trivy-critical.json \
+                    trivy image \\
+                        --severity CRITICAL \\
+                        --exit-code 0 \\
+                        --quiet \\
+                        --format json \\
+                        -o trivy-critical.json \\
                         ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
                 """
             }
@@ -85,7 +85,7 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
                         docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}
                         docker logout
                     """
@@ -96,15 +96,14 @@ pipeline {
         stage('Update Infra (GitOps)') {
             steps {
                 echo 'Updating image tag in Kubernetes manifests...'
-                withCredentials([string(                        
+                withCredentials([string(
                     credentialsId: 'jenkins-github',
                     variable: 'GIT_TOKEN'
                 )]) {
                     sh """
                         rm -rf inventory_app
-                        git clone https://$GIT_TOKEN@github.com/ayaelalfy-CSAI/inventory_app.git
+                        git clone https://\$GIT_TOKEN@github.com/ayaelalfy-CSAI/inventory_app.git
                         cd inventory_app
-                      
                         sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' k8s/deployments/app.yml
                         git config user.email "jenkins@ci.com"
                         git config user.name "Jenkins CI"
@@ -112,17 +111,26 @@ pipeline {
                         git commit -m "CI: update image tag to ${IMAGE_TAG}"
                         git push origin master
                     """
-                    
                 }
             }
         }
     }
 
-    post {                                                     
+    post {
         success {
+            slackSend(
+                channel: '#jenkins-ci',
+                color: 'good',
+                message: "✅ *Pipeline SUCCESS*\n- *Job:* ${env.JOB_NAME}\n- *Build:* #${env.BUILD_NUMBER}\n- *Image:* ${env.REGISTRY}/${env.APP_NAME}:${env.IMAGE_TAG}\n- *Duration:* ${currentBuild.durationString}\n- 🔗 ${env.BUILD_URL}"
+            )
             echo 'CI done! ArgoCD will deploy automatically the k8s manifests.'
         }
         failure {
+            slackSend(
+                channel: '#jenkins-ci',
+                color: 'danger',
+                message: "❌ *Pipeline FAILED*\n- *Job:* ${env.JOB_NAME}\n- *Build:* #${env.BUILD_NUMBER}\n- 🔗 ${env.BUILD_URL}"
+            )
             echo 'Pipeline failed! Check the logs for details.'
         }
         always {
