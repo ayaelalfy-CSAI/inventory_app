@@ -120,7 +120,7 @@ pipeline {
 
     post {                                                     
         success {
-            echo 'CI done! ArgoCD will deploy automatically.'
+            echo 'CI done! ArgoCD will deploy automatically the k8s manifests.'
         }
         failure {
             echo 'Pipeline failed! Check the logs for details.'
