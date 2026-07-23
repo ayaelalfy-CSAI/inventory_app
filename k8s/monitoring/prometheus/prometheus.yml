@@ -46,6 +46,10 @@ spec:
               mountPath: /etc/prometheus
             - name: storage
               mountPath: /prometheus
+            - name: rules-app                             
+              mountPath: /etc/prometheus/rules/app
+            - name: rules-infra
+              mountPath: /etc/prometheus/rules/infra
 
           livenessProbe:
             httpGet:
@@ -65,7 +69,13 @@ spec:
         - name: config
           configMap:
             name: prometheus-config
-
+        - name: rules-app
+          configMap:
+            name: prometheus-rules-app
+        - name: rules-infra
+          configMap:
+            name: prometheus-rules-infra
+            
   volumeClaimTemplates:
     - metadata:
         name: storage

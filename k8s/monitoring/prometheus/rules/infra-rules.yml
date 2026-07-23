@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules-infra
+  namespace: monitoring
+data:
+  infra-rules.yml: |
+    groups:
+      - name: infrastructure-alerts
+        rules:
+          - alert: PostgresDown
+            expr: pg_up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "postgres-exporter cannot reach the database for more than 1 minute."
+
+          - alert: RedisDown
+            expr: redis_up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Redis is down"
+              description: "redis-exporter cannot reach Redis for more than 1 minute."
+
+          - alert: NodeDiskSpaceLow
+            expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Node disk space below 10%"
+              description: "Root filesystem on {{ $labels.instance }} has less than 10% free space."
+
+          - alert: PodCrashLooping
+            expr: increase(kube_pod_container_status_restarts_total{namespace=~"inventory|monitoring"}[15m]) > 3
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod is crash looping"
+              description: "{{ $labels.pod }} in {{ $labels.namespace }} has restarted more than 3 times in 15 minutes."
