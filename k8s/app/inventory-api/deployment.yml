@@ -65,6 +65,10 @@ spec:
           image: ayaelalfy/inventory_app:72
           imagePullPolicy: Always
 
+          env:
+            - name: START_MODE
+              value: "api"
+
           envFrom:
            - configMapRef:
               name: app-configmap   
