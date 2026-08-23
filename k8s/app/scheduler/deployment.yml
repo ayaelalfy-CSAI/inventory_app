@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-scheduler
+  namespace: inventory-prod
+  labels:
+    app: inventory-scheduler
+
+spec:
+
+  replicas: 1 
+  strategy:
+    type: Recreate # avoid two schedulers racing to register jobs during a rollout
+
+  selector:
+    matchLabels:
+      app: inventory-scheduler
+
+  template:
+    metadata:
+      labels:
+        app: inventory-scheduler
+
+    spec:
+      serviceAccountName: inventory-app-sa
+
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-svc -U admin -d inventory_app;
+              do echo "Waiting for postgres..."; sleep 2; done
+              echo "Postgres is ready!"
+
+        - name: wait-for-redis
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis-service -p 6379 ping;
+              do echo "Waiting for redis..."; sleep 2; done
+              echo "Redis is ready!"
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: inventory-scheduler
+          image: ayaelalfy/inventory_app:72
+          imagePullPolicy: Always
+
+          command: ["node", "dist/main.js"]
+
+          ports:
+            - containerPort: 3001
+              name: internal
+
+          env:
+            - name: START_MODE
+              value: "scheduler"
+            - name: PORT
+              value: "3001"
+
+          envFrom:
+            - configMapRef:
+                name: app-configmap
+            - secretRef:
+                name: app-secret
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /app/tmp
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /internal/health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /internal/health
+              port: 3001
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            failureThreshold: 3
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+
+      volumes:
+        - name: tmp
+          emptyDir: {}

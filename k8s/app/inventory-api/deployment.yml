@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-app
+  namespace: inventory-prod
+  labels:
+    app: inventory-app
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: inventory-app
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  template:
+    metadata:
+      labels:
+        app: inventory-app
+
+    spec:
+      serviceAccountName: inventory-app-sa
+
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-svc -U admin -d inventory_app;
+              do echo "Waiting for postgres..."; sleep 2; done
+              echo "Postgres is ready!"
+
+        - name: wait-for-redis
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis-service -p 6379 ping;
+              do echo "Waiting for redis..."; sleep 2; done
+              echo "Redis is ready!"
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: inventory-app
+          image: ayaelalfy/inventory_app:72
+          imagePullPolicy: Always
+
+          envFrom:
+           - configMapRef:
+              name: app-configmap   
+           - secretRef:
+              name: app-secret
+
+          ports:
+            - containerPort: 3000
+              name: http
+          
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /app/tmp
+
+
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            failureThreshold: 12
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
