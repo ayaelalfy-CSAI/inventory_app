@@ -51,7 +51,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-exporter-svc
-  namespace: inventory
+  namespace: inventory-prod
   labels:
     app: redis-exporter
 spec:
