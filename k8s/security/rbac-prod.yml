@@ -3,7 +3,7 @@ kind: ServiceAccount
 metadata:
   name: inventory-app-sa
   namespace: inventory-prod
-  automountServiceAccountToken: false
+automountServiceAccountToken: false
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
