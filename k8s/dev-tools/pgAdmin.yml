@@ -27,7 +27,7 @@ spec:
             - sh
             - -c
             - |
-              until pg_isready -h postgres-svc -p 5432 -U admin;
+              until pg_isready -h postgres-svc.inventory-prod.svc.cluster.local -p 5432 -U admin -d inventory_app;
               do echo "Waiting for postgres..."; sleep 2; done
               echo "Postgres is ready!"
       containers:
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pgadmin-svc
-  namespace: inventory
+  namespace: inventory-dev
   labels:
     app: pgadmin
 spec:

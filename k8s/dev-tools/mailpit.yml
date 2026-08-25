@@ -38,7 +38,7 @@ metadata:
   name: mailpit-service
   labels:
     app: mailpit
-  namespace: inventory  
+  namespace: inventory-dev  
 spec:
   type: ClusterIP
   selector:

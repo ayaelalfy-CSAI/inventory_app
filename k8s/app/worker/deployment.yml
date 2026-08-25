@@ -62,7 +62,7 @@ spec:
 
       containers:
         - name: inventory-worker
-          image: ayaelalfy/inventory_app:73
+          image: ayaelalfy/inventory_app:76
           imagePullPolicy: Always
 
           command: ["node", "dist/main.js"]
@@ -86,8 +86,8 @@ spec:
               memory: "256Mi"
 
           volumeMounts:
-            - name: tmp
-              mountPath: /app/tmp
+            - name: uploads
+              mountPath: /app/uploads
 
           livenessProbe:
             exec:
@@ -108,5 +108,5 @@ spec:
               type: RuntimeDefault
 
       volumes:
-        - name: tmp
+        - name: uploads
           emptyDir: {}

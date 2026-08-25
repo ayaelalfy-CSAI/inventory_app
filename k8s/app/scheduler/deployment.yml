@@ -59,7 +59,7 @@ spec:
 
       containers:
         - name: inventory-scheduler
-          image: ayaelalfy/inventory_app:73
+          image: ayaelalfy/inventory_app:76
           imagePullPolicy: Always
 
           command: ["node", "dist/main.js"]
@@ -81,8 +81,8 @@ spec:
                 name: app-secret
 
           volumeMounts:
-            - name: tmp
-              mountPath: /app/tmp
+            - name: uploads
+              mountPath: /app/uploads
 
           resources:
             requests:
@@ -115,5 +115,5 @@ spec:
               type: RuntimeDefault
 
       volumes:
-        - name: tmp
+        - name: uploads
           emptyDir: {}
