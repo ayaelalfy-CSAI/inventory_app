@@ -46,11 +46,17 @@ spec:
 
         - name: wait-for-redis
           image: redis:7-alpine
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
           command:
             - sh
             - -c
             - |
-              until redis-cli -h redis-service -p 6379 ping;
+              until redis-cli -h redis-service -p 6379 -a "$REDIS_PASSWORD" ping;
               do echo "Waiting for redis..."; sleep 2; done
               echo "Redis is ready!"
 
@@ -92,11 +98,12 @@ spec:
           livenessProbe:
             exec:
               command:
-                - node
-                - -e
-                - "process.exit(0)"
+                - /bin/sh
+                - -c
+                - "kill -0 1"
             initialDelaySeconds: 20
             periodSeconds: 30
+            timeoutSeconds: 5
             failureThreshold: 3
 
           securityContext:

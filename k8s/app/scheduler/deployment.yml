@@ -43,11 +43,17 @@ spec:
 
         - name: wait-for-redis
           image: redis:7-alpine
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
           command:
             - sh
             - -c
             - |
-              until redis-cli -h redis-service -p 6379 ping;
+              until redis-cli -h redis-service -p 6379 -a "$REDIS_PASSWORD" ping;
               do echo "Waiting for redis..."; sleep 2; done
               echo "Redis is ready!"
 
@@ -91,6 +97,13 @@ spec:
             limits:
               cpu: "300m"
               memory: "256Mi"
+
+          startupProbe:
+            httpGet:
+              path: /internal/health
+              port: 3001
+            failureThreshold: 12
+            periodSeconds: 10
 
           readinessProbe:
             httpGet:

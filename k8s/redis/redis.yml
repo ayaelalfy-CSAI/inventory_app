@@ -19,7 +19,10 @@ spec:
       containers:
         - name: redis
           image: redis:6-alpine
-          command: ["redis-server"]
+          command:
+            - sh
+            - -c
+            - 'redis-server --requirepass "$REDIS_PASSWORD"'
           ports:
             - containerPort: 6379
               name: redis
@@ -28,13 +31,12 @@ spec:
             - name: redis-pvc
               mountPath: /data
 
-          
           livenessProbe:
             exec:
               command:
                 - sh
                 - -c
-                - redis-cli ping
+                - 'redis-cli -a "$REDIS_PASSWORD" ping'
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
@@ -45,17 +47,21 @@ spec:
               command:
                 - sh
                 - -c
-                - redis-cli ping
+                - 'redis-cli -a "$REDIS_PASSWORD" ping'
             initialDelaySeconds: 10
             periodSeconds: 5
 
-          
           env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
             - name: REDIS_PORT
               value: "6379"
             - name: REDIS_HOST
               value: redis-service
-                      
+
   volumeClaimTemplates:
     - metadata:
         name: redis-pvc

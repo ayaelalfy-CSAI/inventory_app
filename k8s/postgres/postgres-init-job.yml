@@ -15,7 +15,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
-                  key: POSTGRES_USER 
+                  key: POSTGRES_USER
 
             - name: PGPASSWORD
               valueFrom:
@@ -47,14 +47,15 @@ spec:
 
               echo "Creating database if not exists..."
 
-              psql -h "$PGHOST" -U "$PGUSER" -d postgres <<EOF
+              psql -h "$PGHOST" -U "$PGUSER" -d postgres \
+                -v dbname="$PGDATABASE" -v dbuser="$PGUSER" <<'EOF'
 
-              SELECT 'CREATE DATABASE "' || :'PGDATABASE' || '"'
+              SELECT 'CREATE DATABASE "' || :'dbname' || '"'
               WHERE NOT EXISTS (
-                SELECT FROM pg_database WHERE datname = :'PGDATABASE'
+                SELECT FROM pg_database WHERE datname = :'dbname'
               )\gexec
 
-              GRANT ALL PRIVILEGES ON DATABASE "' || :'PGDATABASE' || '" TO "' || :'PGUSER' || '";
+              SELECT 'GRANT ALL PRIVILEGES ON DATABASE "' || :'dbname' || '" TO "' || :'dbuser' || '"'\gexec
 
               EOF
 
