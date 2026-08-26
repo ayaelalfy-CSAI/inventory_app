@@ -87,9 +87,11 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
+              ephermal-storage: "1Gi"
             limits:
               cpu: "300m"
               memory: "256Mi"
+              ephermal-storage: "2Gi"
 
           volumeMounts:
             - name: uploads

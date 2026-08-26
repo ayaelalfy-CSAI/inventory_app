@@ -37,9 +37,11 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+            ephemeral-storage: "2Gi"
           requests:
             memory: "256Mi"
             cpu: "250m"  
+            ephemeral-storage: "1Gi"
         ports:
         - containerPort: 5540
 
