@@ -55,12 +55,10 @@ pipeline {
                         sh """
                             /opt/sonar-scanner/bin/sonar-scanner \\
                                 -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
-                                -Dsonar.sources=. \\
+                                -Dsonar.sources=k8s \\
                                 -Dsonar.host.url=${SONAR_HOST_URL} \\
                                 -Dsonar.token=\${SONAR_TOKEN} \\
-                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \\
-                                -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,test/**
-
+                                
                         """
                     }
                 }
