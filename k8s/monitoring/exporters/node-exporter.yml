@@ -17,9 +17,7 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       automountServiceAccountToken: false
-      # needs to run as root to read node metrics
-      hostPID: true
-      hostIPC: true
+      
       hostNetwork: true
 
       tolerations:

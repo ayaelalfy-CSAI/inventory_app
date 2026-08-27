@@ -16,7 +16,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
-      serviceAccountName: prometheus-sa   
+      serviceAccountName: kube-state-metrics   
       automountServiceAccountToken: true
 
       containers:
