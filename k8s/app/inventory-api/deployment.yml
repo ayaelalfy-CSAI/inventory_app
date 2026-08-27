@@ -31,12 +31,24 @@ spec:
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+              ephemeral-storage: "100Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "200Mi"
+
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: app-secret
                   key: DB_PASSWORD
+                  
           command:
             - sh
             - -c
@@ -47,6 +59,17 @@ spec:
 
         - name: wait-for-redis
           image: redis:7-alpine
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+              ephemeral-storage: "100Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "200Mi"  
+
           env:
             - name: REDIS_PASSWORD
               valueFrom:
