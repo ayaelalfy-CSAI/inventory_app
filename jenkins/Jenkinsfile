@@ -17,6 +17,23 @@ pipeline {
             }
         }
 
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+          }
+        }
+
+        stage('Unit Tests & Coverage') {
+            steps {
+               sh 'npm run test:cov -- --coverageReporters=lcov --ci'
+            }
+            post {
+              always {
+                 archiveArtifacts artifacts: 'coverage/**', allowEmptyArchive: true
+                }
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
