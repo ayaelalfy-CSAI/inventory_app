@@ -4,7 +4,7 @@ metadata:
   name: mailpit-deployment
   namespace: inventory-dev
 spec:
-  automountServiceAccountToken: false
+  
   replicas: 1
   selector:
     matchLabels:
@@ -14,6 +14,7 @@ spec:
       labels:
         app: mailpit
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: mailpit
         image: axllent/mailpit:v1.31.0

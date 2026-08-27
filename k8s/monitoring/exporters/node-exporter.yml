@@ -3,8 +3,7 @@ kind: DaemonSet
 metadata:
   name: node-exporter
   namespace: monitoring
-spec:
-  automountServiceAccountToken: false
+spec: 
   selector:
     matchLabels:
       app: node-exporter
@@ -17,6 +16,7 @@ spec:
         prometheus.io/port: "9100"
         prometheus.io/path: "/metrics"
     spec:
+      automountServiceAccountToken: false
       # needs to run as root to read node metrics
       hostPID: true
       hostIPC: true

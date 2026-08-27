@@ -5,7 +5,6 @@ metadata:
   namespace: monitoring
 spec:
   serviceName: prometheus-headless
-  automountServiceAccountToken: true
   replicas: 1
   selector:
     matchLabels:
@@ -16,6 +15,7 @@ spec:
         app: prometheus
     spec:
       serviceAccountName: prometheus-sa
+      automountServiceAccountToken: true
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534

@@ -4,7 +4,6 @@ metadata:
   name: redis-exporter-deployment
   namespace: inventory-prod
 spec:
-  automountServiceAccountToken: false
   replicas: 1
   selector:
     matchLabels:
@@ -13,7 +12,8 @@ spec:
     metadata:
       labels:
         app: redis-exporter
-    spec:
+    spec:    
+      automountServiceAccountToken: false
       containers:
         - name: redis-exporter
           image: oliver006/redis_exporter:v1.62.0

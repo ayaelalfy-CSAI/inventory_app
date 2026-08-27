@@ -4,7 +4,7 @@ metadata:
   name: redis-insight-deployment
   namespace: inventory-dev
 spec:
-  automountServiceAccountToken: false
+  
   replicas: 1
   selector:
     matchLabels:
@@ -14,6 +14,7 @@ spec:
       labels:
         app: redis-insight
     spec:
+      automountServiceAccountToken: false
       initContainers:
         - name: wait-for-redis
           image: redis:7-alpine

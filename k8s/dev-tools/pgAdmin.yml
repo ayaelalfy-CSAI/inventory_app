@@ -4,7 +4,7 @@ metadata:
   name: pgadmin-deployment
   namespace: inventory-dev
 spec:
-  automountServiceAccountToken: false
+  
   replicas: 1
   selector:
     matchLabels:
@@ -14,7 +14,7 @@ spec:
       labels:
         app: pgadmin
     spec:
-    
+      automountServiceAccountToken: false
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine

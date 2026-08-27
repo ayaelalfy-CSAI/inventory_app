@@ -4,7 +4,6 @@ metadata:
   name: grafana
   namespace: monitoring
 spec:
-  automountServiceAccountToken: false
   replicas: 1
   selector:
     matchLabels:
@@ -13,7 +12,8 @@ spec:
     metadata:
       labels:
         app: grafana
-    spec:
+    spec:      
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 472          

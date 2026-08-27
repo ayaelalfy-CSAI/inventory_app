@@ -4,7 +4,6 @@ metadata:
   name: alertmanager
   namespace: monitoring
 spec:
-  automountServiceAccountToken: false
   replicas: 1
   selector:
     matchLabels:
@@ -14,6 +13,7 @@ spec:
       labels:
         app: alertmanager
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534

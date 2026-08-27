@@ -3,8 +3,7 @@ kind: Deployment
 metadata:
   name: postgres-exporter-deployment
   namespace: inventory-prod
-spec:
-  automountServiceAccountToken: false
+spec:  
   replicas: 1
   selector:
     matchLabels:
@@ -14,6 +13,7 @@ spec:
       labels:
         app: postgres-exporter
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: postgres-exporter
           image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
