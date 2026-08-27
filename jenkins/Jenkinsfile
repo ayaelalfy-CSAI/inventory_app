@@ -1,6 +1,10 @@
 pipeline {
     agent { label "agent3" }
 
+    tools {
+        nodejs 'nodejs'
+    }
+
     environment {
         APP_NAME          = "inventory_app"
         IMAGE_TAG         = "${BUILD_NUMBER}"
