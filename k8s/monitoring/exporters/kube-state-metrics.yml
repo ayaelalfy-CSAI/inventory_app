@@ -4,6 +4,7 @@ metadata:
   name: kube-state-metrics
   namespace: monitoring
 spec: 
+  automountServiceAccountToken: true
   replicas: 1
   selector:
     matchLabels:
@@ -29,9 +30,11 @@ spec:
             requests:
               cpu: "50m"
               memory: "64Mi"
+              ephemeral-storage: "128Mi"
             limits:
               cpu: "200m"
               memory: "256Mi"
+              ephemeral-storage: "512Mi"
 
           securityContext:
             allowPrivilegeEscalation: false

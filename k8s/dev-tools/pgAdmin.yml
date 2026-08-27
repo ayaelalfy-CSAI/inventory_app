@@ -4,6 +4,7 @@ metadata:
   name: pgadmin-deployment
   namespace: inventory-dev
 spec:
+  automountServiceAccountToken: false
   replicas: 1
   selector:
     matchLabels:
@@ -32,7 +33,7 @@ spec:
               echo "Postgres is ready!"
       containers:
         - name: pgadmin
-          image: dpage/pgadmin4:latest
+          image: dpage/pgadmin4:9.17
           ports:
             - containerPort: 80    
               name: web-ui

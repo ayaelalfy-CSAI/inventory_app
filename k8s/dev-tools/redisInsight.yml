@@ -4,6 +4,7 @@ metadata:
   name: redis-insight-deployment
   namespace: inventory-dev
 spec:
+  automountServiceAccountToken: false
   replicas: 1
   selector:
     matchLabels:
@@ -32,7 +33,7 @@ spec:
 
       containers:
       - name: redis-insight
-        image: redis/redisinsight:latest
+        image: redis/redisinsight:3.8.0
         resources:
           limits:
             memory: "512Mi"

@@ -6,6 +6,7 @@ metadata:
 spec:
   template:
     spec:
+      automountServiceAccountToken: false
       restartPolicy: OnFailure
       containers:
         - name: postgres-init-container
@@ -34,6 +35,16 @@ spec:
 
             - name: PGPORT
               value: "5432"
+
+          resources:
+              limits:
+                memory: "256Mi"
+                cpu: "250m"
+                ephemeral-storage: "1Gi"
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+                ephemeral-storage: "512Mi"  
 
           command:
             - sh

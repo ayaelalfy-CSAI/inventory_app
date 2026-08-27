@@ -5,6 +5,7 @@ metadata:
   namespace: monitoring
 spec:
   serviceName: prometheus-headless
+  automountServiceAccountToken: true
   replicas: 1
   selector:
     matchLabels:
@@ -37,9 +38,11 @@ spec:
             requests:
               cpu: '100m'
               memory: '256Mi'
+              ephemeral-storage: '1Gi'
             limits:
               cpu: '500m'
               memory: '1Gi'
+              ephemeral-storage: '2Gi'
 
           volumeMounts:
             - name: config
