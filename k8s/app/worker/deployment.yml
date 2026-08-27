@@ -26,7 +26,8 @@ spec:
 
     spec:
       serviceAccountName: inventory-app-sa
-
+      automountServiceAccountToken: false
+      
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine
