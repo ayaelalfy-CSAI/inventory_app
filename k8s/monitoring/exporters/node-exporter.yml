@@ -17,8 +17,6 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       automountServiceAccountToken: false
-      
-      hostNetwork: true
 
       tolerations:
         - operator: Exists        # run on ALL nodes including control plane
