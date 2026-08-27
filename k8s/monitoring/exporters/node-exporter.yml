@@ -4,6 +4,7 @@ metadata:
   name: node-exporter
   namespace: monitoring
 spec:
+  automountServiceAccountToken: false
   selector:
     matchLabels:
       app: node-exporter
@@ -40,9 +41,11 @@ spec:
             requests:
               cpu: "50m"
               memory: "64Mi"
+              ephemeral-storage: "128Mi"
             limits:
               cpu: "100m"
               memory: "128Mi"
+              ephemeral-storage: "256Mi"
 
           volumeMounts:
             - name: proc
