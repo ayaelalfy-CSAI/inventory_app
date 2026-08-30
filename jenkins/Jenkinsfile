@@ -130,9 +130,11 @@ pipeline {
                     variable: 'GIT_TOKEN'
                 )]) {
                     sh """
+                        
                         rm -rf inventory_app
                         git clone https://\$GIT_TOKEN@github.com/ayaelalfy-CSAI/inventory_app.git
                         cd inventory_app
+                        git remote set-url origin https://ayaelalfy-CSAI:\$GIT_TOKEN@github.com/ayaelalfy-CSAI/inventory_app.git
                         sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' k8s/app/inventory-api/deployment.yml
                         sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' k8s/app/scheduler/deployment.yml
                         sed -i 's|image: ${REGISTRY}/${APP_NAME}:.*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|g' k8s/app/worker/deployment.yml
