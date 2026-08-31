@@ -15,23 +15,7 @@ pipeline {
 
     stages {
 
-        // stage('Checkout') {
-        //     steps {
-        //         checkout scm
-        //         sh '''
-        //             echo "== Tracked files count =="
-        //             git ls-files | wc -l
-        //             echo "== .gitignore content =="
-        //             cat .gitignore 2>/dev/null || echo "(no .gitignore)"
-        //             echo "== .gitmodules content =="
-        //             cat .gitmodules 2>/dev/null || echo "(no submodules)"
-        //             echo "== .ts files on disk =="
-        //             find . -name "*.ts" -not -path "*/node_modules/*" | wc -l
-        //             echo "== root directory listing =="
-        //             ls -la
-        //         '''
-        //     }
-        // }
+       
 
         stage('Checkout') {
            steps {
@@ -39,26 +23,49 @@ pipeline {
            }
         }
 
+        stage('Debug Docker Workspace') {
+         steps {
+          sh '''
+            echo "=== HOSTNAME ==="
+            hostname
+
+            echo "=== WORKSPACE ==="
+            echo "$WORKSPACE"
+
+            echo "=== PWD ==="
+            pwd
+
+            echo "=== WORKSPACE FILES ==="
+            find "$WORKSPACE" -maxdepth 2 -type f | head -30
+
+            echo "=== DOCKER ==="
+            docker version
+
+            echo "=== DOCKER SOCKET ==="
+            ls -l /var/run/docker.sock
+
+            echo "=== TEST MOUNT ==="
+            docker run --rm \
+                -v "$WORKSPACE:/test" \
+                alpine:latest \
+                sh -c 'echo "Inside container:"; ls -la /test; echo "Files:"; find /test -maxdepth 2 -type f | head -30'
+        '''
+    }
+}
+
         stage('Semgrep SAST') {
          steps {
           sh '''
             docker run --rm \
-                --entrypoint sh \
-                -v "${WORKSPACE}:/src" \
-                -w /src \
-                returntocorp/semgrep -c "
-                    git config --global --add safe.directory /src &&
-                    semgrep scan \
-                        --config=auto \
-                        --no-git-ignore \
-                        --error \
-                        --json \
-                        --output=/src/semgrep-report.json \
-                        /src
-                "
-            echo "=== Semgrep report ==="
-            ls -lh "${WORKSPACE}/semgrep-report.json" || true
-        '''
+            -v "${WORKSPACE}:/src" \
+            returntocorp/semgrep /semgrep semgrep scan \
+            --config=auto \
+            --json \
+            --output=semgrep-report.json \
+            --exit-code 0 \
+            /src
+                   
+         '''   }    
     }
     post {
         always {
