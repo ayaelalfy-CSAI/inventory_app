@@ -25,12 +25,12 @@ pipeline {
             steps {
                 sh '''
                     docker run --rm \
+                        --entrypoint sh \
                         -v "${WORKSPACE}:/src" \
-                        returntocorp/semgrep semgrep scan \
-                        --config=auto \
-                        --json --output=/src/semgrep-report.json \
-                        --error \
-                        /src
+                        -w /src \
+                        returntocorp/semgrep -c "\
+                            git config --global --add safe.directory /src && \
+                            semgrep scan --config=auto --json --output=/src/semgrep-report.json --error /src"
                 '''
             }
             post {
@@ -56,6 +56,7 @@ pipeline {
         stage('OWASP Dependency-Check') {
             steps {
                 sh '''
+                    mkdir -p "${WORKSPACE}/dependency-check-report"
                     docker run --rm \
                         -v "${WORKSPACE}:/src" \
                         -v owasp-dc-data:/usr/share/dependency-check/data \
