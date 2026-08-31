@@ -21,6 +21,25 @@ pipeline {
             }
         }
 
+        stage('Semgrep SAST') {
+            steps {
+                sh '''
+                    docker run --rm \
+                        -v "${WORKSPACE}:/src" \
+                        returntocorp/semgrep semgrep scan \
+                        --config=auto \
+                        --json --output=/src/semgrep-report.json \
+                        --error \
+                        /src
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'semgrep-report.json', allowEmptyArchive: true
+                }
+            }
+        }
+
         stage('Check Node') {
             steps {
               sh 'node -v'
@@ -34,6 +53,27 @@ pipeline {
           }
         }
 
+        stage('OWASP Dependency-Check') {
+            steps {
+                sh '''
+                    docker run --rm \
+                        -v "${WORKSPACE}:/src" \
+                        -v owasp-dc-data:/usr/share/dependency-check/data \
+                        owasp/dependency-check:latest \
+                        --scan /src \
+                        --format "HTML" --format "JSON" \
+                        --project "inventory_app" \
+                        --out /src/dependency-check-report \
+                        --failOnCVSS 7
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                }
+            }
+        }
+
         stage('Unit Tests & Coverage') {
             steps {
                sh 'npm run test:cov -- --coverageReporters=lcov --ci'
@@ -44,6 +84,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('SonarQube Analysis') {
             steps {
