@@ -15,11 +15,29 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+                stage('Checkout') {
             steps {
                 checkout scm
+                sh '''
+                    echo "== Tracked files count =="
+                    git ls-files | wc -l
+                    echo "== .gitignore content =="
+                    cat .gitignore 2>/dev/null || echo "(no .gitignore)"
+                    echo "== .gitmodules content =="
+                    cat .gitmodules 2>/dev/null || echo "(no submodules)"
+                    echo "== .ts files on disk =="
+                    find . -name "*.ts" -not -path "*/node_modules/*" | wc -l
+                    echo "== root directory listing =="
+                    ls -la
+                '''
             }
         }
+
+        //stage('Checkout') {
+        //    steps {
+        //        checkout scm
+        //    }
+        //}
 
         stage('Semgrep SAST') {
             steps {
