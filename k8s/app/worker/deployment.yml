@@ -80,7 +80,7 @@ spec:
 
       containers:
         - name: inventory-worker
-          image: ayaelalfy/inventory_app:76
+          image: ayaelalfy/inventory_app:101
           imagePullPolicy: Always
 
           command: ["node", "dist/main.js"]
