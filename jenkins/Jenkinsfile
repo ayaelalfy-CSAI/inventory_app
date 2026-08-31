@@ -15,48 +15,58 @@ pipeline {
 
     stages {
 
-                stage('Checkout') {
-            steps {
-                checkout scm
-                sh '''
-                    echo "== Tracked files count =="
-                    git ls-files | wc -l
-                    echo "== .gitignore content =="
-                    cat .gitignore 2>/dev/null || echo "(no .gitignore)"
-                    echo "== .gitmodules content =="
-                    cat .gitmodules 2>/dev/null || echo "(no submodules)"
-                    echo "== .ts files on disk =="
-                    find . -name "*.ts" -not -path "*/node_modules/*" | wc -l
-                    echo "== root directory listing =="
-                    ls -la
-                '''
-            }
-        }
+        // stage('Checkout') {
+        //     steps {
+        //         checkout scm
+        //         sh '''
+        //             echo "== Tracked files count =="
+        //             git ls-files | wc -l
+        //             echo "== .gitignore content =="
+        //             cat .gitignore 2>/dev/null || echo "(no .gitignore)"
+        //             echo "== .gitmodules content =="
+        //             cat .gitmodules 2>/dev/null || echo "(no submodules)"
+        //             echo "== .ts files on disk =="
+        //             find . -name "*.ts" -not -path "*/node_modules/*" | wc -l
+        //             echo "== root directory listing =="
+        //             ls -la
+        //         '''
+        //     }
+        // }
 
-        //stage('Checkout') {
-        //    steps {
-        //        checkout scm
-        //    }
-        //}
+        stage('Checkout') {
+           steps {
+               checkout scm
+           }
+        }
 
         stage('Semgrep SAST') {
-            steps {
-                sh '''
-                    docker run --rm \
-                        --entrypoint sh \
-                        -v "${WORKSPACE}:/src" \
-                        -w /src \
-                        returntocorp/semgrep -c "\
-                            git config --global --add safe.directory /src && \
-                            semgrep scan --config=auto --json --output=/src/semgrep-report.json --error /src"
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'semgrep-report.json', allowEmptyArchive: true
-                }
-            }
+         steps {
+          sh '''
+            docker run --rm \
+                --entrypoint sh \
+                -v "${WORKSPACE}:/src" \
+                -w /src \
+                returntocorp/semgrep -c "
+                    git config --global --add safe.directory /src &&
+                    semgrep scan \
+                        --config=auto \
+                        --no-git-ignore \
+                        --error \
+                        --json \
+                        --output=/src/semgrep-report.json \
+                        /src
+                "
+            echo "=== Semgrep report ==="
+            ls -lh "${WORKSPACE}/semgrep-report.json" || true
+        '''
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'semgrep-report.json',
+                allowEmptyArchive: true
         }
+    }
+}
 
         stage('Check Node') {
             steps {
