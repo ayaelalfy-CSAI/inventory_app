@@ -91,7 +91,7 @@ spec:
 
       containers:
         - name: inventory-app
-          image: ayaelalfy/inventory_app:101
+          image: ayaelalfy/inventory_app:147
           imagePullPolicy: Always
 
           env:
