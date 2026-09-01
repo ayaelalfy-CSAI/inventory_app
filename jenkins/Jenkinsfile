@@ -61,7 +61,7 @@ pipeline {
                 sh '''
                     mkdir -p "${WORKSPACE}/dependency-check-report"
                     docker run --rm \
-                        -v "${HOST_WORKSPACE}:/src" \
+                        -v "${WORKSPACE}:/src" \
                         -v owasp-dc-data:/usr/share/dependency-check/data \
                         owasp/dependency-check:latest \
                         --scan /src \
