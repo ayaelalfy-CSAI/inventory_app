@@ -12,12 +12,9 @@ pipeline {
         SONAR_HOST_URL    = "http://172.17.0.1:9000"
         SONAR_PROJECT_KEY = "inventory_app"
         HOST_WORKSPACE    = "/var/lib/docker/volumes/483f4546b4e6ce1893810f7f2407deb98feb3ff0ee3d1302c78664b79d0388ad/_data/workspace/${JOB_NAME}"
-
     }
 
     stages {
-
-       
 
         stage('Checkout') {
            steps {
@@ -35,10 +32,9 @@ pipeline {
               --config=auto \
               --json \
               --output=/src/semgrep-report.json \
-              /src  || true
-                   
-            '''   }    
-    
+              /src || true
+            '''
+          }
          post {
            always {
               archiveArtifacts artifacts: 'semgrep-report.json',
@@ -63,7 +59,7 @@ pipeline {
         stage('OWASP Dependency-Check') {
             steps {
                 sh '''
-                    mkdir -p "${HOST_WORKSPACE}/dependency-check-report"
+                    mkdir -p "${WORKSPACE}/dependency-check-report"
                     docker run --rm \
                         -v "${HOST_WORKSPACE}:/src" \
                         -v owasp-dc-data:/usr/share/dependency-check/data \
@@ -93,7 +89,6 @@ pipeline {
             }
         }
 
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
@@ -106,8 +101,7 @@ pipeline {
                                 -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
                                 -Dsonar.sources=k8s \\
                                 -Dsonar.host.url=${SONAR_HOST_URL} \\
-                                -Dsonar.token=\${SONAR_TOKEN} \\
-                                
+                                -Dsonar.token=\${SONAR_TOKEN}
                         """
                     }
                 }
@@ -179,7 +173,6 @@ pipeline {
                     variable: 'GIT_TOKEN'
                 )]) {
                     sh """
-                        
                         rm -rf inventory_app
                         git clone https://\$GIT_TOKEN@github.com/ayaelalfy-CSAI/inventory_app.git
                         cd inventory_app
