@@ -57,26 +57,34 @@ pipeline {
         }
 
         stage('OWASP Dependency-Check') {
-            steps {
-                sh '''
-                    mkdir -p "${WORKSPACE}/dependency-check-report"
-                    docker run --rm \
-                        -v "${WORKSPACE}:/src" \
-                        -v owasp-dc-data:/usr/share/dependency-check/data \
-                        owasp/dependency-check:latest \
-                        --scan /src \
-                        --format "HTML" --format "JSON" \
-                        --project "inventory_app" \
-                        --out /src/dependency-check-report \
-                        --failOnCVSS 7
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-                }
-            }
+    steps {
+        sh '''
+            rm -rf "${WORKSPACE}/dependency-check-report"
+            mkdir -p "${WORKSPACE}/dependency-check-report"
+
+            chmod -R 777 "${WORKSPACE}/dependency-check-report"
+
+            docker run --rm \
+                -v "${WORKSPACE}:/src" \
+                -v owasp-dc-data:/usr/share/dependency-check/data \
+                owasp/dependency-check:latest \
+                --scan /src \
+                --format HTML \
+                --format JSON \
+                --project "inventory_app" \
+                --out /src/dependency-check-report \
+                --failOnCVSS 7
+        '''
+    }
+
+    post {
+        always {
+            archiveArtifacts \
+                artifacts: 'dependency-check-report/**', \
+                allowEmptyArchive: true
         }
+    }
+}
 
         stage('Unit Tests & Coverage') {
             steps {
