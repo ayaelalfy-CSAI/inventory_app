@@ -11,6 +11,8 @@ pipeline {
         REGISTRY          = "ayaelalfy"
         SONAR_HOST_URL    = "http://172.17.0.1:9000"
         SONAR_PROJECT_KEY = "inventory_app"
+        HOST_WORKSPACE    = "/var/lib/docker/volumes/jenkins_home/_data/workspace/${JOB_NAME}"
+
     }
 
     stages {
@@ -23,41 +25,11 @@ pipeline {
            }
         }
 
-        stage('Debug Docker Workspace') {
-         steps {
-          sh '''
-            echo "=== HOSTNAME ==="
-            hostname
-
-            echo "=== WORKSPACE ==="
-            echo "$WORKSPACE"
-
-            echo "=== PWD ==="
-            pwd
-
-            echo "=== WORKSPACE FILES ==="
-            find "$WORKSPACE" -maxdepth 2 -type f | head -30
-
-            echo "=== DOCKER ==="
-            docker version
-
-            echo "=== DOCKER SOCKET ==="
-            ls -l /var/run/docker.sock
-
-            echo "=== TEST MOUNT ==="
-            docker run --rm \
-                -v "$WORKSPACE:/test" \
-                alpine:latest \
-                sh -c 'echo "Inside container:"; ls -la /test; echo "Files:"; find /test -maxdepth 2 -type f | head -30'
-        '''
-          }
-     }
-
         stage('Semgrep SAST') {
          steps {
           sh '''
             docker run --rm \
-            -v "${WORKSPACE}:/src" \
+            -v "${HOST_WORKSPACE}:/src" \
             returntocorp/semgrep /semgrep semgrep scan \
             --config=auto \
             --json \
@@ -91,9 +63,9 @@ pipeline {
         stage('OWASP Dependency-Check') {
             steps {
                 sh '''
-                    mkdir -p "${WORKSPACE}/dependency-check-report"
+                    mkdir -p "${HOST_WORKSPACE}/dependency-check-report"
                     docker run --rm \
-                        -v "${WORKSPACE}:/src" \
+                        -v "${HOST_WORKSPACE}:/src" \
                         -v owasp-dc-data:/usr/share/dependency-check/data \
                         owasp/dependency-check:latest \
                         --scan /src \
