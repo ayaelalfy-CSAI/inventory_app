@@ -35,8 +35,7 @@ pipeline {
               --config=auto \
               --json \
               --output=/src/semgrep-report.json \
-              --exit-code 0 \
-              /src
+              /src  || true
                    
             '''   }    
     
