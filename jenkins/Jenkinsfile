@@ -29,7 +29,7 @@ pipeline {
          steps {
           sh '''
             docker run --rm \
-              -v "$(pwd):/src" \
+              -v "${HOST_WORKSPACE}:/src" \
               returntocorp/semgrep \
               semgrep scan \
               --config=auto \
