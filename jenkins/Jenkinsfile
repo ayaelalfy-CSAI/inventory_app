@@ -29,23 +29,24 @@ pipeline {
          steps {
           sh '''
             docker run --rm \
-            -v "${HOST_WORKSPACE}:/src" \
-            returntocorp/semgrep /semgrep semgrep scan \
-            --config=auto \
-            --json \
-            --output=semgrep-report.json \
-            --exit-code 0 \
-            /src
+              -v "${HOST_WORKSPACE}:/src" \
+              returntocorp/semgrep \
+              semgrep scan \
+              --config=auto \
+              --json \
+              --output=/src/semgrep-report.json \
+              --exit-code 0 \
+              /src
                    
-         '''   }    
+            '''   }    
     
-    post {
-        always {
-            archiveArtifacts artifacts: 'semgrep-report.json',
-                allowEmptyArchive: true
+         post {
+           always {
+              archiveArtifacts artifacts: 'semgrep-report.json',
+                  allowEmptyArchive: true
+                }
+            }
         }
-    }
-}
 
         stage('Check Node') {
             steps {
