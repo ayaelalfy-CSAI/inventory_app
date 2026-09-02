@@ -22,6 +22,19 @@ pipeline {
            }
         }
 
+        stage('Check Node') {
+            steps {
+              sh 'node -v'
+              sh 'npm -v'
+             }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+          }
+        }
+
         stage('Semgrep SAST') {
          steps {
           sh '''
@@ -43,50 +56,37 @@ pipeline {
             }
         }
 
-        stage('Check Node') {
+        stage('OWASP Dependency-Check') {
             steps {
-              sh 'node -v'
-              sh 'npm -v'
-             }
-        }
+                withCredentials([string(
+                    credentialsId: 'nvd-api-key',
+                    variable: 'NVD_API_KEY'
+                )]) {
+                    sh '''
+                        rm -rf "${WORKSPACE}/dependency-check-report"
+                        mkdir -p "${WORKSPACE}/dependency-check-report"
+                        chmod -R 777 "${WORKSPACE}/dependency-check-report"
 
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm ci'
-          }
+                        docker run --rm \
+                            -v "${HOST_WORKSPACE}:/src" \
+                            -v owasp-dc-data:/usr/share/dependency-check/data \
+                            owasp/dependency-check:latest \
+                            --scan /src \
+                            --format HTML \
+                            --format JSON \
+                            --project "inventory_app" \
+                            --out /src/dependency-check-report \
+                            --nvdApiKey "${NVD_API_KEY}" \
+                            --noupdate
+                    '''
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                }
+            }
         }
-
-  stage('OWASP Dependency-Check') {
-    steps {
-        withCredentials([string(
-            credentialsId: 'nvd-api-key',
-            variable: 'NVD_API_KEY'
-        )]) {
-            sh '''
-                rm -rf "${WORKSPACE}/dependency-check-report"
-                mkdir -p "${WORKSPACE}/dependency-check-report"
-                chmod -R 777 "${WORKSPACE}/dependency-check-report"
-
-                docker run --rm \
-                    -v "${HOST_WORKSPACE}:/src" \
-                    -v owasp-dc-data:/usr/share/dependency-check/data \
-                    owasp/dependency-check:latest \
-                    --scan /src \
-                    --format HTML \
-                    --format JSON \
-                    --project "inventory_app" \
-                    --out /src/dependency-check-report \
-                    --nvdApiKey "${NVD_API_KEY}" \
-                    --noupdate
-            '''
-        }
-    }
-    post {
-        always {
-            archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-        }
-    }
- }
 
         stage('Unit Tests & Coverage') {
             steps {
@@ -109,7 +109,8 @@ pipeline {
                         sh """
                             /opt/sonar-scanner/bin/sonar-scanner \\
                                 -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
-                                -Dsonar.sources=k8s \\
+                                -Dsonar.sources=src \\
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \\
                                 -Dsonar.host.url=${SONAR_HOST_URL} \\
                                 -Dsonar.token=\${SONAR_TOKEN}
                         """
