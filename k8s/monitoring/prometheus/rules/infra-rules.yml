@@ -36,7 +36,7 @@ data:
               description: "Root filesystem on {{ $labels.instance }} has less than 10% free space."
 
           - alert: PodCrashLooping
-            expr: increase(kube_pod_container_status_restarts_total{namespace=~"inventory|monitoring"}[15m]) > 3
+            expr: increase(kube_pod_container_status_restarts_total{namespace=~"inventory-prod|monitoring"}[15m]) > 3
             for: 5m
             labels:
               severity: warning

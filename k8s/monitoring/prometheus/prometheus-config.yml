@@ -44,18 +44,18 @@ data:
       # ── 4. Postgres exporter ──
       - job_name: 'postgres'
         static_configs:
-          - targets: ['postgres-exporter-svc.inventory.svc.cluster.local:9187']
+          - targets: ['postgres-exporter-svc.inventory-prod.svc.cluster.local:9187']
 
       # ── 5. Redis exporter ──
       - job_name: 'redis'
         static_configs:
-          - targets: ['redis-exporter-svc.inventory.svc.cluster.local:9121']
+          - targets: ['redis-exporter-svc.inventory-prod.svc.cluster.local:9121']
 
       # ── 6. Inventory App  ──
       - job_name: 'inventory-app'
         metrics_path: '/api/v1/metrics'
         static_configs:
-          - targets: ['app-svc.inventory.svc.cluster.local:3000']
+          - targets: ['app-svc.inventory-prod.svc.cluster.local:3000']
 
       # ── 7. cAdvisor (via kubelet) ──
       - job_name: 'kubernetes-cadvisor'

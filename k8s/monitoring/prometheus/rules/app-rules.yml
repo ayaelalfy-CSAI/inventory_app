@@ -27,7 +27,7 @@ data:
               description: "More than 5% of requests are failing with 5xx errors over the last 5 minutes."
 
           - alert: HighMemoryUsage
-            expr: (container_memory_usage_bytes{namespace="inventory"} / container_spec_memory_limit_bytes{namespace="inventory"}) > 0.9
+            expr: (container_memory_usage_bytes{namespace="inventory-prod"} / container_spec_memory_limit_bytes{namespace="inventory"}) > 0.9
             for: 5m
             labels:
               severity: warning
