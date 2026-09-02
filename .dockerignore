@@ -1,0 +1,17 @@
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.local
+*.md
+.idea
+.vscode
+coverage
+data
+uploads
+postgres_data
+argocd
+docs
+jenkins
+k8s
